@@ -1,6 +1,5 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
-
 from decouple import config
 
 DATABASE_URL = config("DATABASE_URL")
@@ -25,3 +24,4 @@ def get_db():
         yield db
     finally:
         db.close()
+        

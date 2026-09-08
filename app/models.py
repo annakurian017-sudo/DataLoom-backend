@@ -2,7 +2,7 @@ import uuid
 
 from sqlalchemy import Column, String, JSON
 from sqlalchemy.dialects.postgresql import UUID
-from database import Base
+from app.database import Base
 
 
 class Process(Base):

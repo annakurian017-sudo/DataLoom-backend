@@ -1,36 +1,45 @@
 import uuid
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
-from app.services import dataset_service as service
 
-
+from app.models import Dataset
 from app.schemas import DatasetCreate
 
 
 def create_dataset(db: Session, dataset: DatasetCreate):
-    return service.create_dataset(db, dataset)
+    db_dataset = Dataset(**dataset.dict())
+    db.add(db_dataset)
+    db.commit()
+    db.refresh(db_dataset)
+    return db_dataset
 
 
 def get_datasets(db: Session):
-    return service.get_datasets(db)
+    return db.query(Dataset).all()
 
 
 def get_dataset(db: Session, dataset_id: uuid.UUID):
-    dataset = service.get_dataset(db, dataset_id)
+    dataset = db.query(Dataset).filter(Dataset.id == dataset_id).first()
     if dataset is None:
         raise HTTPException(status_code=404, detail="Dataset not found")
     return dataset
 
 
 def update_dataset(db: Session, dataset_id: uuid.UUID, dataset: DatasetCreate):
-    updated = service.update_dataset(db, dataset_id, dataset)
-    if updated is None:
+    db_dataset = db.query(Dataset).filter(Dataset.id == dataset_id).first()
+    if db_dataset is None:
         raise HTTPException(status_code=404, detail="Dataset not found")
-    return updated
+    for key, value in dataset.dict().items():
+        setattr(db_dataset, key, value)
+    db.commit()
+    db.refresh(db_dataset)
+    return db_dataset
 
 
 def delete_dataset(db: Session, dataset_id: uuid.UUID):
-    dataset = service.delete_dataset(db, dataset_id)
-    if dataset is None:
+    db_dataset = db.query(Dataset).filter(Dataset.id == dataset_id).first()
+    if db_dataset is None:
         raise HTTPException(status_code=404, detail="Dataset not found")
+    db.delete(db_dataset)
+    db.commit()
     return {"message": "Dataset deleted successfully"}
